@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      PATH: /opt/hostedtoolcache/node/20.20.2/x64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      PATH: /usr/local/lib/android/sdk/cmdline-tools/latest/bin:/usr/local/lib/android/sdk/platform-tools:/opt/hostedtoolcache/node/20.20.2/x64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -105,7 +105,7 @@ jobs:
       - name: Init and Build Android APK
         run: |
           yes | sdkmanager --licenses || true
-          npx tauri android init --force
+          npx tauri android init
           npx tauri android build --apk
 
       - name: Upload Android Artifact
