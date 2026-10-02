@@ -28,6 +28,9 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
@@ -77,6 +80,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -131,6 +137,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Install Rust & Apple Targets
         uses: dtolnay/rust-toolchain@stable
