@@ -103,7 +103,10 @@ jobs:
           curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
 
       - name: Init and Build Android APK
+        shell: bash
         run: |
+          export NDK_HOME="$ANDROID_SDK_ROOT/ndk/$(ls -1 $ANDROID_SDK_ROOT/ndk | head -n 1)"
+          echo "Using NDK_HOME: $NDK_HOME"
           yes | sdkmanager --licenses || true
           npx tauri android init
           npx tauri android build --apk
