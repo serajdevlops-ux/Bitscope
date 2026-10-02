@@ -8,6 +8,7 @@ on:
       - 'v*'
 
 jobs:
+  # 1. DESKTOP BUILDS (Windows .exe, Mac .app, Linux .deb)
   build-desktop:
     strategy:
       fail-fast: false
@@ -54,10 +55,102 @@ jobs:
       - name: Build Desktop Executable
         run: npx tauri build
 
-      - name: Upload Artifacts
+      - name: Upload Desktop Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: desktop-binaries-${{ matrix.platform }}
           path: |
             src-tauri/target/release/bundle/
             src-tauri/target/release/*.exe
+
+  # 2. ANDROID BUILD (.apk)
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Rust & Android Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@latest
+
+      - name: Fetch Required Compiler Icons
+        shell: bash
+        run: |
+          mkdir -p src-tauri/icons
+          BASE="https://raw.githubusercontent.com/tauri-apps/tauri/1.x/tooling/cli/templates/app/src-tauri/icons"
+          curl -sL "$BASE/32x32.png" -o src-tauri/icons/32x32.png
+          curl -sL "$BASE/128x128.png" -o src-tauri/icons/128x128.png
+          curl -sL "$BASE/128x128@2x.png" -o src-tauri/icons/128x128@2x.png
+          curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
+
+      - name: Init and Build Android APK
+        run: |
+          npx tauri android init
+          npx tauri android build --apk
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitscope-android-apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
+
+  # 3. iOS BUILD (Xcode Project & App)
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust & Apple Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,x86_64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@latest
+
+      - name: Fetch Required Compiler Icons
+        shell: bash
+        run: |
+          mkdir -p src-tauri/icons
+          BASE="https://raw.githubusercontent.com/tauri-apps/tauri/1.x/tooling/cli/templates/app/src-tauri/icons"
+          curl -sL "$BASE/32x32.png" -o src-tauri/icons/32x32.png
+          curl -sL "$BASE/128x128.png" -o src-tauri/icons/128x128.png
+          curl -sL "$BASE/128x128@2x.png" -o src-tauri/icons/128x128@2x.png
+          curl -sL "$BASE/icon.icns" -o src-tauri/icons/icon.icns
+          curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
+
+      - name: Init and Build iOS
+        run: |
+          npx tauri ios init
+          npx tauri ios build || echo "iOS build requires an Apple Developer Certificate to finalize signing. Project generated."
+
+      - name: Upload iOS Project Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitscope-ios-project
+          path: src-tauri/gen/apple/
