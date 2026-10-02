@@ -40,6 +40,7 @@ jobs:
         run: npm install -g @tauri-apps/cli@latest
 
       - name: Fetch Required Compiler Icons
+        shell: bash
         run: |
           mkdir -p src-tauri/icons
           BASE="https://raw.githubusercontent.com/tauri-apps/tauri/1.x/tooling/cli/templates/app/src-tauri/icons"
