@@ -90,6 +90,8 @@ jobs:
   # 2. ANDROID BUILD (.apk)
   build-android:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -114,16 +116,6 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r26d
-          link-to-sdk: true
-
       - name: Install Rust & Android Targets
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -140,14 +132,18 @@ jobs:
           mkdir -p src-tauri/icons
           BASE="https://raw.githubusercontent.com/tauri-apps/tauri/1.x/tooling/cli/templates/app/src-tauri/icons"
           curl -sL "$BASE/32x32.png" -o src-tauri/icons/32x32.png
-          curl -sL "$BASE/128x128.png" -o src-tauri/icons/128x128.png
+          curl -sL "$BASE/128x128.png" -o src-tauri/icons/128x128@2x.png
           curl -sL "$BASE/128x128@2x.png" -o src-tauri/icons/128x128@2x.png
           curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
 
       - name: Build Android APK
-        env:
-          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
+          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+          yes | sdkmanager --licenses || true
+          
+          export NDK_HOME="$ANDROID_SDK_ROOT/ndk/$(ls -1 $ANDROID_SDK_ROOT/ndk | head -n 1)"
+          echo "Using NDK_HOME: $NDK_HOME"
+          
           npx tauri android init --force || true
           npx tauri android build --apk
 
