@@ -1,9 +1,9 @@
 {
   "productName": "BitScope",
   "version": "1.0.0",
-  "identifier": "com.bitscope.app",
+  "identifier": "com.bitscope.analyzer",
   "build": {
-    "frontendDist": "../www"
+    "frontendDist": "../"
   },
   "app": {
     "windows": [
