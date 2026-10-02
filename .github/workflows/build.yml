@@ -37,8 +37,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli@latest
+      - name: Install Tauri CLI & dependencies
+        run: |
+          if [ -f package.json ]; then npm install; fi
+          npm install -g @tauri-apps/cli@latest
 
       - name: Fetch Required Compiler Icons
         shell: bash
@@ -66,9 +68,6 @@ jobs:
   # 2. ANDROID BUILD (.apk)
   build-android:
     runs-on: ubuntu-latest
-    env:
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      PATH: /usr/local/lib/android/sdk/cmdline-tools/latest/bin:/usr/local/lib/android/sdk/platform-tools:/opt/hostedtoolcache/node/20.20.2/x64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -84,14 +83,24 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install Rust & Android Targets
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+          link-to-sdk: true
+
+      - name: Setup Rust & Android Targets
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
-      - name: Install cargo-ndk & Tauri CLI
+      - name: Install Tauri CLI & Dependencies
         run: |
-          cargo install cargo-ndk
+          if [ -f package.json ]; then npm install; fi
           npm install -g @tauri-apps/cli@latest
 
       - name: Fetch Required Compiler Icons
@@ -104,34 +113,18 @@ jobs:
           curl -sL "$BASE/128x128@2x.png" -o src-tauri/icons/128x128@2x.png
           curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
 
-      - name: Build Android via cargo-ndk and Gradle
-        shell: bash
+      - name: Build Tauri App for Android
+        env:
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
-          export NDK_HOME="$ANDROID_SDK_ROOT/ndk/$(ls -1 $ANDROID_SDK_ROOT/ndk | head -n 1)"
-          echo "Using NDK_HOME: $NDK_HOME"
-          yes | sdkmanager --licenses || true
-
-          # Initialize Android platform templates
           npx tauri android init --force || true
-
-          # Cross-compile Rust core directly with cargo-ndk into jniLibs
-          cd src-tauri
-          cargo ndk -t arm64-v8a -t armeabi-v7a -t x86 -t x86_64 -o gen/android/app/src/main/jniLibs build --release
-
-          # Compile APK using Gradle while skipping the broken npm rustBuild tasks
-          cd gen/android
-          ./gradlew assembleRelease \
-            -x rustBuildArm64Release \
-            -x rustBuildArmv7Release \
-            -x rustBuildI686Release \
-            -x rustBuildX86_64Release \
-            -x rustBuildUniversalRelease
+          npx tauri android build --apk
 
       - name: Upload Android Artifact
         uses: actions/upload-artifact@v4
         with:
           name: bitscope-android-apk
-          path: src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
 
   # 3. iOS BUILD (Xcode Project & App)
   build-ios:
@@ -150,8 +143,10 @@ jobs:
         with:
           targets: aarch64-apple-ios,x86_64-apple-ios,aarch64-apple-ios-sim
 
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli@latest
+      - name: Install Tauri CLI & Dependencies
+        run: |
+          if [ -f package.json ]; then npm install; fi
+          npm install -g @tauri-apps/cli@latest
 
       - name: Fetch Required Compiler Icons
         shell: bash
@@ -166,7 +161,7 @@ jobs:
 
       - name: Init and Build iOS
         run: |
-          npx tauri ios init
+          npx tauri ios init --force || true
           npx tauri ios build || echo "iOS build requires an Apple Developer Certificate to finalize signing. Project generated."
 
       - name: Upload iOS Project Artifacts
