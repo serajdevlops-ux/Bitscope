@@ -1,4 +1,4 @@
-name: "Cross-Platform Build"
+name: "Cross-Platform Full Build"
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - 'v*'
 
 jobs:
+  # 1. DESKTOP BUILDS (Windows, Linux, macOS)
   build-desktop:
     strategy:
       fail-fast: false
@@ -27,6 +28,15 @@ jobs:
         with:
           node-version: 20
 
+      - name: Ensure package.json exists
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
+          fi
+
+      - name: Install dependencies
+        run: npm install
+
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
@@ -41,16 +51,14 @@ jobs:
             wget \
             file \
             libssl-dev \
+            libgtk-3-dev \
+            libglib2.0-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
             pkg-config
 
-      - name: Install frontend dependencies & Tauri CLI
-        run: |
-          if [ -f package.json ]; then
-            npm install
-          fi
-          npm install -g @tauri-apps/cli@latest
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@latest
 
       - name: Fetch Required Compiler Icons
         shell: bash
@@ -69,7 +77,7 @@ jobs:
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
         run: npx tauri build
 
-      - name: Upload Artifacts
+      - name: Upload Desktop Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: binaries-${{ matrix.platform }}
@@ -78,3 +86,73 @@ jobs:
             src-tauri/target/release/*.exe
             src-tauri/target/release/*.AppImage
             src-tauri/target/release/*.deb
+
+  # 2. ANDROID BUILD (.apk)
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Ensure package.json exists
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
+          fi
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+          link-to-sdk: true
+
+      - name: Install Rust & Android Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Install cargo-ndk & Tauri CLI
+        run: |
+          cargo install cargo-ndk
+          npm install -g @tauri-apps/cli@latest
+
+      - name: Fetch Required Compiler Icons
+        shell: bash
+        run: |
+          mkdir -p src-tauri/icons
+          BASE="https://raw.githubusercontent.com/tauri-apps/tauri/1.x/tooling/cli/templates/app/src-tauri/icons"
+          curl -sL "$BASE/32x32.png" -o src-tauri/icons/32x32.png
+          curl -sL "$BASE/128x128.png" -o src-tauri/icons/128x128.png
+          curl -sL "$BASE/128x128@2x.png" -o src-tauri/icons/128x128@2x.png
+          curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
+
+      - name: Build Android APK
+        env:
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          npx tauri android init --force || true
+          npx tauri android build --apk
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitscope-android-apk
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
