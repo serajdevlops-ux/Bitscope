@@ -1,4 +1,4 @@
-name: "Cross-Platform Multi-Build"
+name: "Cross-Platform Build"
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
       - 'v*'
 
 jobs:
-  # 1. DESKTOP BUILDS (Windows .exe, Mac .app, Linux .deb)
   build-desktop:
     strategy:
       fail-fast: false
@@ -28,10 +27,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: |
-          if [ -f package.json ]; then npm install; fi
-
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
@@ -41,8 +36,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli@latest
+      - name: Install frontend dependencies & Tauri CLI
+        run: |
+          if [ -f package.json ]; then
+            npm install
+          fi
+          npm install -g @tauri-apps/cli@latest
 
       - name: Fetch Required Compiler Icons
         shell: bash
@@ -56,59 +55,15 @@ jobs:
           curl -sL "$BASE/icon.ico" -o src-tauri/icons/icon.ico
           curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
 
-      - name: Build Desktop Executable
+      - name: Build Tauri App
         run: npx tauri build
 
-      - name: Upload Desktop Artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-binaries-${{ matrix.platform }}
+          name: binaries-${{ matrix.platform }}
           path: |
             src-tauri/target/release/bundle/
             src-tauri/target/release/*.exe
-
-  # 2. iOS BUILD (Xcode Project & App)
-  build-ios:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: |
-          if [ -f package.json ]; then npm install; fi
-
-      - name: Install Rust & Apple Targets
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-ios,x86_64-apple-ios,aarch64-apple-ios-sim
-
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli@latest
-
-      - name: Fetch Required Compiler Icons
-        shell: bash
-        run: |
-          mkdir -p src-tauri/icons
-          BASE="https://raw.githubusercontent.com/tauri-apps/tauri/1.x/tooling/cli/templates/app/src-tauri/icons"
-          curl -sL "$BASE/32x32.png" -o src-tauri/icons/32x32.png
-          curl -sL "$BASE/128x128.png" -o src-tauri/icons/128x128.png
-          curl -sL "$BASE/128x128@2x.png" -o src-tauri/icons/128x128@2x.png
-          curl -sL "$BASE/icon.icns" -o src-tauri/icons/icon.icns
-          curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
-
-      - name: Init and Build iOS
-        run: |
-          npx tauri ios init --force || true
-          npx tauri ios build || echo "iOS build requires an Apple Developer Certificate to finalize signing. Project generated."
-
-      - name: Upload iOS Project Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: bitscope-ios-project
-          path: src-tauri/gen/apple/
+            src-tauri/target/release/*.AppImage
+            src-tauri/target/release/*.deb
