@@ -1,0 +1,21 @@
+{
+  "productName": "BitScope",
+  "version": "1.0.0",
+  "identifier": "com.bitscope.app",
+  "build": {
+    "frontendDist": "../www"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "BitScope",
+        "width": 1024,
+        "height": 768
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all"
+  }
+}
