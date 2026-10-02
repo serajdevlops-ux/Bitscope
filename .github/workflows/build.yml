@@ -1,0 +1,78 @@
+name: "Cross-Platform Multi-Build"
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+
+jobs:
+  # 1. BUILD WINDOWS .EXE & DESKTOP BINARIES
+  build-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: ''
+          - platform: 'macos-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Dependencies
+        run: npm install @tauri-apps/cli@next
+
+      - name: Build Desktop Executables
+        run: npx tauri build ${{ matrix.args }}
+
+      - name: Upload Desktop Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-binaries-${{ matrix.platform }}
+          path: src-tauri/target/release/bundle/
+
+  # 2. BUILD ANDROID .APK
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android NDK & SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Rust & Android Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+
+      - name: Install Dependencies
+        run: npm install @tauri-apps/cli@next
+
+      - name: Init and Build Android APK
+        run: |
+          npx tauri android init
+          npx tauri android build --apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitscope-android-apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
