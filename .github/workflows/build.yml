@@ -66,6 +66,8 @@ jobs:
   # 2. ANDROID BUILD (.apk)
   build-android:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -80,9 +82,6 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Install Rust & Android Targets
         uses: dtolnay/rust-toolchain@stable
@@ -104,6 +103,7 @@ jobs:
 
       - name: Init and Build Android APK
         run: |
+          yes | sdkmanager --licenses || true
           npx tauri android init
           npx tauri android build --apk
 
