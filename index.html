@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BitScope - Universal Binary & Entropy Analyzer</title>
+  <style>
+    :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+    body { margin: 0; font-family: monospace; background: var(--bg); color: var(--text); padding: 15px; }
+    h2 { color: var(--accent); margin-top: 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .card { background: var(--panel); border-radius: 8px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    input[type="file"], textarea { width: 100%; box-sizing: border-box; background: #020617; border: 1px solid #334155; color: #a5f3fc; padding: 10px; font-family: monospace; border-radius: 4px; }
+    textarea { height: 120px; resize: vertical; }
+    button { background: var(--accent); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 8px; }
+    .meter-container { background: #020617; height: 24px; border-radius: 12px; overflow: hidden; margin-top: 10px; border: 1px solid #334155; }
+    .meter-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #4ade80, #facc15, #f87171); transition: width 0.3s; }
+    pre { background: #020617; padding: 10px; overflow-x: auto; max-height: 200px; border-radius: 4px; border: 1px solid #334155; }
+  </style>
+</head>
+<body>
+  <h2>BitScope // Shannon Entropy Analyzer</h2>
+  
+  <div class="grid">
+    <!-- FILE ANALYZER PANEL -->
+    <div class="card">
+      <h3>1. Select Binary or Document</h3>
+      <input type="file" id="fileInput" />
+      <div class="meter-container">
+        <div id="entropyBar" class="meter-bar"></div>
+      </div>
+      <p>Entropy: <strong id="entropyValue">0.0000</strong> / 8.0000</p>
+      <p id="analysisTag">Load a file to inspect structural density.</p>
+    </div>
+
+    <!-- LIVE IN-APP SCRIPT EXECUTION -->
+    <div class="card">
+      <h3>2. In-App Code Modification (JS / Engine Hooks)</h3>
+      <textarea id="codeEditor" placeholder="// Modify or write JS logic to process data hooks&#10;function processData(bytes) {&#10;  return 'File length in bytes: ' + bytes.length;&#10;}"></textarea>
+      <button onclick="runCustomCode()">Run Custom Logic</button>
+      <pre id="outputConsole">Console output ready...</pre>
+    </div>
+  </div>
+
+  <script>
+    let currentBytes = new Uint8Array(0);
+
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const buffer = await file.arrayBuffer();
+      currentBytes = new Uint8Array(buffer);
+      
+      const entropy = calculateShannonEntropy(currentBytes);
+      document.getElementById('entropyValue').innerText = entropy.toFixed(4);
+      
+      const percentage = (entropy / 8) * 100;
+      document.getElementById('entropyBar').style.width = percentage + '%';
+
+      let tag = "Low Entropy (Plaintext or Sparse Memory)";
+      if (entropy > 6.0 && entropy < 7.5) tag = "Medium Entropy (Compiled Code / Structured Data)";
+      if (entropy >= 7.5) tag = "High Entropy (Compressed Archive, Encrypted Payload, or Random Data)";
+      document.getElementById('analysisTag').innerText = tag;
+    });
+
+    function calculateShannonEntropy(bytes) {
+      if (bytes.length === 0) return 0;
+      const freq = new Uint32Array(256);
+      for (let i = 0; i < bytes.length; i++) freq[bytes[i]]++;
+      
+      let entropy = 0;
+      for (let i = 0; i < 256; i++) {
+        if (freq[i] > 0) {
+          const p = freq[i] / bytes.length;
+          entropy -= p * (Math.log2 ? Math.log2(p) : Math.log(p) / Math.LN2);
+        }
+      }
+      return entropy;
+    }
+
+    function runCustomCode() {
+      const code = document.getElementById('codeEditor').value;
+      const consoleOut = document.getElementById('outputConsole');
+      try {
+        const customFn = new Function('bytes', code + '\nreturn typeof processData === "function" ? processData(bytes) : "No processData function defined";');
+        const result = customFn(currentBytes);
+        consoleOut.innerText = "SUCCESS: " + result;
+      } catch (err) {
+        consoleOut.innerText = "ERROR: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
