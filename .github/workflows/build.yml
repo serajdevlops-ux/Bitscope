@@ -28,6 +28,12 @@ jobs:
         with:
           node-version: 20
 
+      - name: Ensure package.json exists
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
+          fi
+
       - name: Install dependencies
         run: npm install
 
@@ -80,6 +86,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Ensure package.json exists
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
+          fi
 
       - name: Install dependencies
         run: npm install
@@ -137,6 +149,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Ensure package.json exists
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
+          fi
 
       - name: Install dependencies
         run: npm install
