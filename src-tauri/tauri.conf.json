@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "identifier": "com.bitscope.analyzer",
   "build": {
-    "frontendDist": "../"
+    "frontendDist": "../www"
   },
   "app": {
     "windows": [
