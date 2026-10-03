@@ -2,374 +2,271 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Crucial for mobile apps to prevent zooming and scaling issues -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>BitScope Code Editor</title>
   <style>
     /* ==========================================================
-       ACODE MOBILE-NATIVE DARK THEME
+       ACODE MOBILE-NATIVE DARK THEME (NO EMOJIS)
        ========================================================== */
     :root {
       --bg-dark: #121319;
       --bg-editor: #181920;
       --bg-sidebar: #0d0e12;
       --bg-surface: #21232d;
+      --bg-terminal: #090a0f;
       --accent: #7aa2f7;
       --green-btn: #9ece6a;
+      --danger: #f7768e;
       --text-main: #a9b1d6;
       --text-muted: #565f89;
       --border-color: #292e42;
       --font-mono: 'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent; /* Removes blue tap highlight on mobile */
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     body, html {
-      width: 100%;
-      height: 100%;
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      overflow: hidden;
+      width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden;
     }
 
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      width: 100vw;
-      position: relative;
-    }
+    .app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
 
-    /* 1. TOP NAVBAR (Clean Icon-Based) */
+    /* TOP NAVBAR */
     .top-bar {
-      height: 56px;
-      background-color: var(--bg-dark);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 8px;
-      border-bottom: 1px solid var(--border-color);
-      z-index: 10;
+      height: 56px; background-color: var(--bg-dark); display: flex; align-items: center;
+      justify-content: space-between; padding: 0 8px; border-bottom: 1px solid var(--border-color); z-index: 10;
     }
+    .brand-section { display: flex; align-items: center; gap: 12px; }
+    .brand-title { font-weight: 700; font-size: 1.2rem; color: #fff; }
+    .action-group { display: flex; align-items: center; gap: 4px; }
 
-    .brand-section {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand-title {
-      font-weight: 700;
-      font-size: 1.2rem;
-      color: #fff;
-      letter-spacing: 0.5px;
-    }
-
-    .action-group {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* Icon Buttons (Replaces the broken text/emojis) */
+    /* SVG ICON BUTTONS */
     .icon-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
+      background: transparent; border: none; color: var(--text-main); width: 36px; height: 36px;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
-
-    .icon-btn:active {
-      background: var(--bg-surface);
-    }
-
-    .icon-btn svg {
-      width: 24px;
-      height: 24px;
-      fill: currentColor;
-    }
-
+    .icon-btn:active { background: var(--bg-surface); }
+    .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
     .icon-accent { color: var(--accent); }
     .icon-green { color: var(--green-btn); }
+    .icon-danger { color: var(--danger); width: 28px !important; height: 28px !important; }
 
-    /* 2. SIDEBAR (Sliding Mobile Drawer) */
+    /* SIDEBAR DRAWER */
     .sidebar {
-      position: absolute;
-      top: 56px; /* Below top bar */
-      left: -280px; /* Hidden by default */
-      width: 260px;
-      height: calc(100vh - 56px);
-      background-color: var(--bg-sidebar);
-      border-right: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 50;
+      position: absolute; top: 56px; left: -280px; width: 260px; height: calc(100vh - 56px);
+      background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column; transition: left 0.3s ease; z-index: 50;
     }
-
-    .sidebar.open {
-      left: 0;
-    }
-
-    /* Dark overlay when sidebar is open */
+    .sidebar.open { left: 0; }
     .sidebar-overlay {
-      position: absolute;
-      top: 56px;
-      left: 0;
-      width: 100vw;
-      height: calc(100vh - 56px);
-      background: rgba(0, 0, 0, 0.5);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 40;
+      position: absolute; top: 56px; left: 0; width: 100vw; height: calc(100vh - 56px);
+      background: rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 40;
     }
-
-    .sidebar-overlay.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
+    .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
 
     .sidebar-header {
-      padding: 16px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      letter-spacing: 1px;
+      padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
       border-bottom: 1px solid var(--border-color);
     }
-
-    .file-tree {
-      list-style: none;
-      padding: 8px;
-      overflow-y: auto;
-    }
-
+    .sidebar-header span { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+    
+    .file-tree { list-style: none; padding: 8px; overflow-y: auto; flex: 1; }
     .file-item {
-      padding: 12px 16px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 4px;
-      color: var(--text-main);
+      padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
     }
+    .file-item-name { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
+    .file-item-name svg { width: 16px; height: 16px; fill: var(--text-muted); flex-shrink: 0; }
+    .file-item:active, .file-item.active { background-color: rgba(122, 162, 247, 0.15); color: var(--accent); }
+    .file-item.active .file-item-name svg { fill: var(--accent); }
 
-    .file-item:active, .file-item.active {
-      background-color: rgba(122, 162, 247, 0.15);
-      color: var(--accent);
-    }
-
-    /* 3. EDITOR WORKSPACE (Full Width) */
-    .workspace {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background-color: var(--bg-editor);
-    }
-
+    /* WORKSPACE */
+    .workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: var(--bg-editor); }
     .tab-bar {
-      height: 40px;
-      background-color: var(--bg-dark);
-      display: flex;
-      align-items: flex-end;
-      overflow-x: auto;
-      border-bottom: 1px solid var(--border-color);
+      height: 40px; background-color: var(--bg-dark); display: flex; align-items: flex-end;
+      border-bottom: 1px solid var(--border-color); padding-left: 8px;
     }
-    .tab-bar::-webkit-scrollbar { display: none; }
-
     .tab {
-      padding: 10px 20px;
-      font-size: 0.85rem;
-      background: var(--bg-editor);
-      color: #fff;
-      border-top: 2px solid var(--accent);
-      white-space: nowrap;
+      padding: 10px 20px; font-size: 0.85rem; background: var(--bg-editor); color: #fff;
+      border-top: 2px solid var(--accent); white-space: nowrap; display: none;
+    }
+    .tab.active { display: block; }
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 20px;
     }
 
-    .editor-body {
-      flex: 1;
-      display: flex;
-      position: relative;
-      overflow: hidden;
-    }
-
+    .editor-body { flex: 1; display: flex; position: relative; overflow: hidden; }
     .line-numbers {
-      width: 45px;
-      padding: 12px 0;
-      background-color: var(--bg-editor);
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      line-height: 1.5;
-      text-align: right;
-      padding-right: 12px;
-      user-select: none;
-      border-right: 1px solid rgba(255,255,255,0.05);
-      overflow: hidden;
+      width: 45px; padding: 12px 0; background-color: var(--bg-editor); color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.5; text-align: right;
+      padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.05); overflow: hidden;
     }
-
     .code-area {
-      flex: 1;
-      height: 100%;
-      background: transparent;
-      color: var(--text-main);
-      border: none;
-      outline: none;
-      padding: 12px;
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      line-height: 1.5;
-      resize: none;
-      tab-size: 2;
-      white-space: pre;
-      word-wrap: normal;
-      overflow-x: auto;
-      overflow-y: auto;
+      flex: 1; height: 100%; background: transparent; color: var(--text-main); border: none; outline: none;
+      padding: 12px; font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.5; resize: none;
+      white-space: pre; word-wrap: normal; overflow-x: auto; overflow-y: auto;
     }
 
-    /* 4. FOOTER STATUS BAR */
+    /* TERMINAL */
+    .terminal-container {
+      height: 30%; background: var(--bg-terminal); border-top: 1px solid var(--border-color);
+      display: none; flex-direction: column; font-family: var(--font-mono); font-size: 0.85rem;
+    }
+    .terminal-container.open { display: flex; }
+    .terminal-header {
+      background: var(--bg-dark); padding: 4px 12px; font-size: 0.75rem; color: var(--text-muted);
+      display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);
+    }
+    .terminal-output { flex: 1; padding: 8px; overflow-y: auto; color: #a9b1d6; }
+    .terminal-input-row { display: flex; padding: 0 8px 8px 8px; align-items: center; }
+    .terminal-prompt { color: var(--green-btn); margin-right: 8px; }
+    .terminal-input {
+      flex: 1; background: transparent; border: none; color: #fff; font-family: inherit; font-size: inherit; outline: none;
+    }
+
+    /* STATUS BAR */
     .status-bar {
-      height: 28px;
-      background-color: var(--bg-dark);
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 12px;
-      font-size: 0.75rem;
-      color: var(--text-muted);
+      height: 28px; background-color: var(--bg-dark); border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 0.75rem; color: var(--text-muted);
     }
 
-    /* 5. LIVE PREVIEW MODAL */
-    .preview-modal {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #ffffff;
-      z-index: 100;
-      display: none;
-      flex-direction: column;
+    /* MODALS (AI & AUTH) */
+    .modal-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+      display: none; justify-content: center; align-items: center; z-index: 100;
     }
-    .preview-header {
-      height: 56px;
-      background: #1e1e1e;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      font-weight: bold;
+    .modal-box {
+      background: var(--bg-surface); width: 90%; max-width: 400px; border-radius: 12px;
+      padding: 24px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px;
     }
-    .preview-frame {
-      flex: 1;
-      border: none;
-      width: 100%;
-      height: 100%;
-      background: #fff;
+    .modal-title { font-size: 1.2rem; color: #fff; font-weight: bold; text-align: center; }
+    .modal-input {
+      width: 100%; padding: 12px; background: var(--bg-dark); border: 1px solid var(--border-color);
+      color: #fff; border-radius: 6px; outline: none;
     }
+    .modal-btn {
+      width: 100%; padding: 12px; background: rgba(122, 162, 247, 0.2); color: var(--accent);
+      border: 1px solid var(--accent); border-radius: 6px; font-weight: bold; cursor: pointer;
+    }
+    .ai-chat-area { height: 250px; background: var(--bg-dark); border-radius: 6px; padding: 12px; overflow-y: auto; font-size: 0.9rem; display: flex; flex-direction: column; gap: 8px;}
+    .ai-msg { padding: 8px; border-radius: 6px; background: var(--bg-editor); width: fit-content; max-width: 90%;}
+    .ai-msg.user { background: rgba(122, 162, 247, 0.2); color: var(--accent); align-self: flex-end; }
+
     #fileInput { display: none; }
   </style>
 </head>
 <body>
 
   <div class="app-container">
-    <!-- TOP TOOLBAR -->
     <header class="top-bar">
       <div class="brand-section">
-        <!-- Hamburger Menu Icon -->
+        <!-- Menu Icon -->
         <button class="icon-btn" onclick="toggleSidebar()">
           <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
         </button>
         <span class="brand-title">BitScope</span>
       </div>
       <div class="action-group">
-        <!-- Folder Icon -->
+        <!-- AI Agent Icon -->
+        <button class="icon-btn icon-accent" onclick="openAI()">
+          <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        </button>
+        <!-- Terminal Toggle Icon -->
+        <button class="icon-btn" onclick="toggleTerminal()">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.59-2.59L7.5 9l4 4-4 4z"/></svg>
+        </button>
+        <!-- Open File -->
         <button class="icon-btn" onclick="document.getElementById('fileInput').click()">
-          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
-        </button>
-        <!-- Save Icon -->
-        <button class="icon-btn icon-accent" onclick="saveFile()">
-          <svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-        </button>
-        <!-- Play Icon -->
-        <button class="icon-btn icon-green" onclick="runTestApp()">
-          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
         </button>
       </div>
     </header>
 
-    <!-- SIDEBAR OVERLAY & DRAWER -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">Filesystem</div>
-      <ul class="file-tree">
-        <li class="file-item active" onclick="switchFile('index.html')">📄 index.html</li>
-        <li class="file-item" onclick="switchFile('style.css')">🎨 style.css</li>
-        <li class="file-item" onclick="switchFile('main.rs')">⚙️ main.rs</li>
-        <li class="file-item" onclick="switchFile('app.exe')">📦 app.exe (Hex)</li>
+      <div class="sidebar-header">
+        <span>Filesystem</span>
+        <!-- Create File Button -->
+        <button class="icon-btn" onclick="createNewFile()">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+      </div>
+      <ul class="file-tree" id="file-list">
+        <!-- JS dynamically populates files here -->
       </ul>
     </aside>
 
-    <!-- WORKSPACE AREA -->
     <main class="workspace">
-      <div class="tab-bar">
-        <div class="tab active" id="current-tab">index.html</div>
+      <div class="tab-bar" id="tab-bar">
+        <div class="tab" id="current-tab">Untitled</div>
       </div>
-      <div class="editor-body">
+      
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state">
+        <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; fill: var(--text-muted); margin-bottom: 12px;"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        <h3>No File Open</h3>
+        <p>Create a file from the sidebar to start coding.</p>
+      </div>
+
+      <!-- Editor Canvas -->
+      <div class="editor-body" id="editor-body" style="display: none;">
         <div class="line-numbers" id="line-numbers">1</div>
-        <textarea 
-          class="code-area" 
-          id="code-editor" 
-          spellcheck="false" 
-          oninput="updateEditor()"
-          onscroll="syncScroll()"
-        ></textarea>
+        <textarea class="code-area" id="code-editor" spellcheck="false" oninput="updateEditor()" onscroll="syncScroll()"></textarea>
+      </div>
+
+      <!-- Terminal View -->
+      <div class="terminal-container" id="terminal-container">
+        <div class="terminal-header">
+          <span>Terminal</span>
+          <span style="cursor:pointer;" onclick="toggleTerminal()">✕</span>
+        </div>
+        <div class="terminal-output" id="terminal-output">
+          <div>BitScope Shell v1.0.0</div>
+          <div>Ready.</div>
+        </div>
+        <div class="terminal-input-row">
+          <span class="terminal-prompt">~/project $</span>
+          <input type="text" class="terminal-input" id="terminal-input" onkeypress="handleTerminal(event)">
+        </div>
       </div>
     </main>
 
-    <!-- STATUS BAR -->
     <footer class="status-bar">
-      <span id="file-type-status">HTML Mode</span>
-      <span id="cursor-status">Lines: 1</span>
+      <span id="file-type-status">Ready</span>
+      <span id="cursor-status">-</span>
     </footer>
   </div>
 
-  <!-- TEST APP PREVIEW MODAL -->
-  <div class="preview-modal" id="preview-modal">
-    <div class="preview-header">
-      <span>Live Preview</span>
-      <button class="icon-btn" style="color:white; background:#333;" onclick="closePreview()">
-        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-      </button>
+  <!-- AUTH MODAL -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-box">
+      <div class="modal-title">Sign in to BitScope AI</div>
+      <input type="text" id="auth-username" class="modal-input" placeholder="Username" />
+      <input type="password" class="modal-input" placeholder="Password" />
+      <button class="modal-btn" onclick="loginUser()">Login / Sign Up</button>
+      <button class="icon-btn" style="width:100%;" onclick="document.getElementById('auth-modal').style.display='none'">Cancel</button>
     </div>
-    <iframe class="preview-frame" id="preview-frame"></iframe>
+  </div>
+
+  <!-- AI AGENT MODAL -->
+  <div class="modal-overlay" id="ai-modal">
+    <div class="modal-box" style="height: 80vh;">
+      <div class="modal-title">BitScope Agent</div>
+      <div class="ai-chat-area" id="ai-chat">
+        <!-- Messages injected here -->
+      </div>
+      <input type="text" id="ai-input" class="modal-input" placeholder="Ask AI to write code..." onkeypress="handleAIChat(event)" />
+      <button class="icon-btn" style="width:100%;" onclick="document.getElementById('ai-modal').style.display='none'">Close</button>
+    </div>
   </div>
 
   <input type="file" id="fileInput" onchange="handleFileOpen(event)" />
 
   <script>
     /* ==========================================================
-       EDITOR LOGIC
+       LOGIC, FILESYSTEM, & TERMINAL
        ========================================================== */
     const codeEditor = document.getElementById('code-editor');
     const lineNumbers = document.getElementById('line-numbers');
@@ -378,29 +275,109 @@
     const cursorStatus = document.getElementById('cursor-status');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
+    const fileListEl = document.getElementById('file-list');
+    
+    // Auth & AI State
+    let isLoggedIn = false;
+    let currentUser = "";
 
-    const files = {
-      'index.html': '<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { background: #121212; color: #00ffcc; font-family: sans-serif; text-align: center; padding-top: 50px; }\n  </style>\n</head>\n<body>\n  <h1>BitScope Works!</h1>\n  <button onclick="alert(\'Success!\')">Click Me</button>\n</body>\n</html>',
-      'style.css': 'body {\n  margin: 0;\n  padding: 0;\n}',
-      'main.rs': 'fn main() {\n    println!("BitScope Mobile Active");\n}',
-      'app.exe': '00000000: 4d 5a 90 00 03 00 00 00 04 00 00 00 ff ff 00 00\n00000010: b8 00 00 00 00 00 00 00 40 00 00 00 00 00 00 00'
-    };
+    // Virtual File System (Starts Empty)
+    let files = {};
+    let activeFileName = null;
 
-    let activeFileName = 'index.html';
-    codeEditor.value = files[activeFileName];
-    updateEditor();
+    function renderSidebar() {
+      fileListEl.innerHTML = "";
+      for (const name in files) {
+        const li = document.createElement('li');
+        li.className = `file-item ${name === activeFileName ? 'active' : ''}`;
+        
+        // File Icon SVG
+        const iconSvg = `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+        // Trash Icon SVG
+        const trashSvg = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+
+        li.innerHTML = `
+          <div class="file-item-name" onclick="switchFile('${name}')">
+            ${iconSvg} <span>${name}</span>
+          </div>
+          <button class="icon-btn icon-danger" onclick="deleteFile('${name}', event)">
+            ${trashSvg}
+          </button>
+        `;
+        fileListEl.appendChild(li);
+      }
+
+      // UI View state updates
+      if (activeFileName) {
+        document.getElementById('empty-state').style.display = 'none';
+        document.getElementById('editor-body').style.display = 'flex';
+        currentTab.classList.add('active');
+        currentTab.innerText = activeFileName;
+      } else {
+        document.getElementById('empty-state').style.display = 'flex';
+        document.getElementById('editor-body').style.display = 'none';
+        currentTab.classList.remove('active');
+        fileTypeStatus.innerText = "Ready";
+        cursorStatus.innerText = "-";
+      }
+    }
+
+    function createNewFile() {
+      const fileName = prompt("Enter file name (e.g., app.apk, main.cpp, script.kt):");
+      if (!fileName || fileName.trim() === "") return;
+      
+      if (!files[fileName]) {
+        files[fileName] = ""; 
+      }
+      switchFile(fileName);
+    }
+
+    function deleteFile(name, event) {
+      event.stopPropagation();
+      if(confirm(`Delete ${name}?`)) {
+        delete files[name];
+        if (activeFileName === name) {
+          activeFileName = null;
+          codeEditor.value = "";
+        }
+        renderSidebar();
+      }
+    }
 
     function toggleSidebar() {
       sidebar.classList.toggle('open');
       overlay.classList.toggle('open');
     }
 
+    function switchFile(fileName) {
+      activeFileName = fileName;
+      codeEditor.value = files[fileName] || '';
+      
+      // Auto-detect Language mode
+      const ext = fileName.split('.').pop().toLowerCase();
+      const langMap = {
+        'cpp': 'C++', 'c': 'C', 'h': 'C/C++ Header', 'kt': 'Kotlin', 
+        'py': 'Python', 'js': 'JavaScript', 'html': 'HTML', 'css': 'CSS',
+        'rs': 'Rust', 'java': 'Java'
+      };
+
+      if (['exe', 'apk', 'bin'].includes(ext)) {
+        fileTypeStatus.innerText = `Binary (${ext.toUpperCase()}) Hex Mode`;
+      } else {
+        fileTypeStatus.innerText = (langMap[ext] || 'Text') + ' Mode';
+      }
+
+      updateEditor();
+      renderSidebar();
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    }
+
     function updateEditor() {
+      if(!activeFileName) return;
       const lines = codeEditor.value.split('\n').length;
       let lineNumsHtml = '';
-      for (let i = 1; i <= lines; i++) {
-        lineNumsHtml += i + '<br>';
-      }
+      for (let i = 1; i <= lines; i++) lineNumsHtml += i + '<br>';
       lineNumbers.innerHTML = lineNumsHtml;
       cursorStatus.innerText = `Lines: ${lines}`;
       files[activeFileName] = codeEditor.value;
@@ -410,25 +387,15 @@
       lineNumbers.scrollTop = codeEditor.scrollTop;
     }
 
-    function switchFile(fileName) {
-      activeFileName = fileName;
-      currentTab.innerText = fileName;
-      codeEditor.value = files[fileName] || '';
-
-      if (fileName.endsWith('.exe')) fileTypeStatus.innerText = 'Binary (Hex) Mode';
-      else if (fileName.endsWith('.html')) fileTypeStatus.innerText = 'HTML Mode';
-      else fileTypeStatus.innerText = 'Text Mode';
-
-      updateEditor();
-      toggleSidebar(); // Close sidebar after selecting file on mobile
-    }
-
+    // FILE I/O (Handle Binary vs Text)
     function handleFileOpen(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      if (file.name.endsWith('.exe') || file.name.endsWith('.bin') || file.name.endsWith('.apk')) {
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      if (['exe', 'bin', 'apk'].includes(ext)) {
         reader.readAsArrayBuffer(file);
         reader.onload = function(e) {
           const buffer = new Uint8Array(e.target.result);
@@ -450,22 +417,71 @@
       }
     }
 
-    function saveFile() {
-      const blob = new Blob([codeEditor.value], { type: 'text/plain;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = activeFileName;
-      link.click();
-      URL.revokeObjectURL(link.href);
+    // TERMINAL LOGIC
+    function toggleTerminal() {
+      const term = document.getElementById('terminal-container');
+      term.classList.toggle('open');
     }
 
-    function runTestApp() {
-      document.getElementById('preview-modal').style.display = 'flex';
-      document.getElementById('preview-frame').srcdoc = codeEditor.value;
+    function handleTerminal(e) {
+      if (e.key === 'Enter') {
+        const input = document.getElementById('terminal-input');
+        const output = document.getElementById('terminal-output');
+        const val = input.value;
+        if (val.trim() === 'clear') {
+          output.innerHTML = '';
+        } else {
+          output.innerHTML += `<div><span style="color:#9ece6a;">~/project $</span> ${val}</div>`;
+          output.innerHTML += `<div style="color:#565f89;">bash: ${val.split(' ')[0]}: command not found (UI Mock)</div>`;
+        }
+        input.value = '';
+        output.scrollTop = output.scrollHeight;
+      }
     }
 
-    function closePreview() {
-      document.getElementById('preview-modal').style.display = 'none';
+    // AI & AUTH LOGIC
+    function openAI() {
+      if (!isLoggedIn) {
+        document.getElementById('auth-modal').style.display = 'flex';
+      } else {
+        document.getElementById('ai-modal').style.display = 'flex';
+      }
+    }
+
+    function loginUser() {
+      const uname = document.getElementById('auth-username').value;
+      if (uname.trim().length > 0) {
+        isLoggedIn = true;
+        currentUser = uname;
+        document.getElementById('auth-modal').style.display = 'none';
+        
+        // Welcome message in AI chat
+        const chat = document.getElementById('ai-chat');
+        chat.innerHTML = `<div class="ai-msg">Agent: Access granted. Welcome, ${currentUser}. I am configured for your account. What are we building today?</div>`;
+        openAI();
+      } else {
+        alert("Enter a username.");
+      }
+    }
+
+    function handleAIChat(e) {
+      if (e.key === 'Enter') {
+        const input = document.getElementById('ai-input');
+        const chat = document.getElementById('ai-chat');
+        if (input.value.trim() === '') return;
+        
+        // User message
+        chat.innerHTML += `<div class="ai-msg user">${input.value}</div>`;
+        
+        // Fake AI processing
+        setTimeout(() => {
+          chat.innerHTML += `<div class="ai-msg">Agent: Generating code structure for ${input.value}... (AI Mock Response)</div>`;
+          chat.scrollTop = chat.scrollHeight;
+        }, 600);
+
+        input.value = '';
+        chat.scrollTop = chat.scrollHeight;
+      }
     }
   </script>
 </body>
