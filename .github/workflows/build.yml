@@ -29,11 +29,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      - name: Install Frontend Dependencies
+      - name: Ensure package.json exists and configure for Tauri
         shell: bash
-        run: npm install
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No frontend build required\"", "tauri": "tauri"}}' > package.json
+          else
+            npm pkg set scripts.tauri="tauri" || true
+          fi
+
+      - name: Install Frontend Dependencies & Tauri CLI
+        shell: bash
+        run: |
+          npm install
+          npm install @tauri-apps/cli@latest
+          npm install -g @tauri-apps/cli@latest
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -55,11 +66,7 @@ jobs:
             librsvg2-dev \
             pkg-config
 
-      - name: Install Tauri CLI
-        shell: bash
-        run: npm install -g @tauri-apps/cli@latest
-
-      - name: Fetch Required Compiler Icons (Fallback)
+      - name: Fetch Required Compiler Icons
         shell: bash
         run: |
           mkdir -p src-tauri/icons
@@ -102,17 +109,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      - name: Install Frontend Dependencies
+      - name: Ensure package.json exists and configure for Tauri
         shell: bash
-        run: npm install
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No frontend build required\"", "tauri": "tauri"}}' > package.json
+          else
+            npm pkg set scripts.tauri="tauri" || true
+          fi
 
-      - name: Verify Frontend Build (Debug Step)
+      - name: Install Frontend Dependencies & Tauri CLI
         shell: bash
-        # This prevents the silent Gradle error by running your build script directly first.
-        # If your web code is broken, it will fail here and tell you EXACTLY why.
-        run: npm run build --if-present
+        run: |
+          npm install
+          npm install @tauri-apps/cli@latest
+          npm install -g @tauri-apps/cli@latest
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -125,13 +137,11 @@ jobs:
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
-      - name: Install cargo-ndk & Tauri CLI
+      - name: Install cargo-ndk
         shell: bash
-        run: |
-          cargo install cargo-ndk
-          npm install -g @tauri-apps/cli@latest
+        run: cargo install cargo-ndk
 
-      - name: Fetch Required Compiler Icons (Fallback)
+      - name: Fetch Required Compiler Icons
         shell: bash
         run: |
           mkdir -p src-tauri/icons
