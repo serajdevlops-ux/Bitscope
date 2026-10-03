@@ -162,9 +162,9 @@ jobs:
           export NDK_HOME="$ANDROID_SDK_ROOT/ndk/$(ls -1 $ANDROID_SDK_ROOT/ndk | head -n 1)"
           echo "Using NDK_HOME: $NDK_HOME"
           
-          # Initialize and build Android project
+          # Initialize and build Android project with Debug flag
           npx tauri android init || true
-          npx tauri android build --apk
+          npx tauri android build --apk --debug
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
