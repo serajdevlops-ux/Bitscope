@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BitScope Code Editor - Vibe Coder Edition</title>
+  <title>BitScope Code Editor</title>
   <style>
     :root {
       --bg-dark: #121319;
@@ -14,11 +14,10 @@
       --accent: #7aa2f7;
       --green-btn: #9ece6a;
       --danger: #f7768e;
-      --warning: #e0af68;
       --text-main: #a9b1d6;
       --text-muted: #565f89;
       --border-color: #292e42;
-      --font-mono: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      --font-mono: 'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -39,6 +38,7 @@
     .brand-title { font-weight: 700; font-size: 1.2rem; color: #fff; }
     .action-group { display: flex; align-items: center; gap: 4px; }
 
+    /* SVG ICON BUTTONS */
     .icon-btn {
       background: transparent; border: none; color: var(--text-main); width: 36px; height: 36px;
       border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
@@ -49,7 +49,7 @@
     .icon-green { color: var(--green-btn); }
     .icon-danger { color: var(--danger); width: 28px !important; height: 28px !important; }
 
-    /* SIDEBAR */
+    /* SIDEBAR DRAWER */
     .sidebar {
       position: absolute; top: 56px; left: -280px; width: 260px; height: calc(100vh - 56px);
       background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color);
@@ -129,79 +129,10 @@
       display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 0.75rem; color: var(--text-muted);
     }
 
-    /* MODALS */
-    .modal-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85);
-      display: flex; justify-content: center; align-items: center; z-index: 100;
-    }
-    .modal-box {
-      background: var(--bg-surface); width: 92%; max-width: 440px; max-height: 85vh; border-radius: 12px;
-      padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
-    }
-    .modal-title { font-size: 1.1rem; color: #fff; font-weight: bold; text-align: center; }
-    .modal-desc { font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.4; }
-    .modal-input {
-      width: 100%; padding: 12px; background: var(--bg-dark); border: 1px solid var(--border-color);
-      color: #fff; border-radius: 6px; outline: none; font-size: 0.9rem;
-    }
-    .modal-btn {
-      padding: 10px; background: rgba(122, 162, 247, 0.2); color: var(--accent);
-      border: 1px solid var(--accent); border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem; text-align: center;
-    }
-    .modal-btn.primary { background: var(--accent); color: #000; }
-    .modal-btn.green { background: var(--green-btn); color: #000; border-color: var(--green-btn); }
-
-    .tier-card {
-      background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; cursor: pointer;
-    }
-    .tier-card:active { border-color: var(--accent); }
-    .tier-title { font-weight: bold; color: #fff; font-size: 0.9rem; }
-    .tier-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-
-    .ai-chat-area { 
-      flex: 1; min-height: 180px; max-height: 300px; background: var(--bg-dark); border-radius: 6px; 
-      padding: 12px; overflow-y: auto; font-size: 0.9rem; display: flex; flex-direction: column; gap: 10px;
-    }
-    .ai-msg { padding: 8px 12px; border-radius: 6px; background: var(--bg-editor); width: fit-content; max-width: 90%; line-height: 1.4; }
-    .ai-msg.user { background: rgba(122, 162, 247, 0.2); color: var(--accent); align-self: flex-end; }
-
     #fileInput { display: none; }
   </style>
 </head>
 <body>
-
-  <!-- FIRST-RUN MODEL SELECTOR / WIZARD MODAL -->
-  <div class="modal-overlay" id="setup-modal">
-    <div class="modal-box">
-      <div class="modal-title">🚀 BitScope AI Hub</div>
-      <div class="modal-desc">Select your GGUF model tier or drop in an API key to wake up your coding agent instantly.</div>
-      
-      <div class="tier-card" onclick="selectModelTier('Small (1.5B Q4)', 'TinyLlama / Qwen 1.5B - Lightning fast on mobile')">
-        <div class="tier-title">⚡ Small Tier (1.5B Quantized)</div>
-        <div class="tier-sub">Instant responses, lowest RAM usage. Best for standard devices.</div>
-      </div>
-      
-      <div class="tier-card" onclick="selectModelTier('Medium (3B Q4_K_M)', 'Llama 3.2 3B - Balanced reasoning & coding')">
-        <div class="tier-title">⚖️ Medium Tier (3B Q4_K_M)</div>
-        <div class="tier-sub">Recommended balance for clean logic and accurate boilerplate generation.</div>
-      </div>
-
-      <div class="tier-card" onclick="selectModelTier('Large (7B+ Q4)', 'DeepSeek / Qwen 7B - Advanced context')">
-        <div class="tier-title">🧠 Large Tier (7B Model)</div>
-        <div class="tier-sub">Heavy duty coding. Requires strong device memory.</div>
-      </div>
-
-      <button class="modal-btn green" onclick="autoConfigureModel()">✨ Auto-Configure (Recommended for You)</button>
-
-      <div style="border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 4px;">
-        <div class="tier-sub" style="margin-bottom: 6px; text-align: center;">Or bypass GGUF with a Cloud API Key:</div>
-        <div style="display: flex; gap: 8px;">
-          <input type="password" id="api-key-input" class="modal-input" placeholder="sk-..." />
-          <button class="modal-btn" onclick="saveApiKey()">Save Key</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div class="app-container">
     <header class="top-bar">
@@ -212,9 +143,6 @@
         <span class="brand-title">BitScope</span>
       </div>
       <div class="action-group">
-        <button class="icon-btn icon-accent" onclick="openAI()">
-          <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-        </button>
         <button class="icon-btn" onclick="toggleTerminal()">
           <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.59-2.59L7.5 9l4 4-4 4z"/></svg>
         </button>
@@ -257,8 +185,8 @@
           <span style="cursor:pointer;" onclick="toggleTerminal()">✕</span>
         </div>
         <div class="terminal-output" id="terminal-output">
-          <div>BitScope VibeShell v2.4</div>
-          <div>Active AI: <span id="active-ai-label" style="color:var(--green-btn);">Not Configured</span></div>
+          <div>BitScope Shell v1.0.0</div>
+          <div>Ready.</div>
         </div>
         <div class="terminal-input-row">
           <span class="terminal-prompt">~/project $</span>
@@ -271,21 +199,6 @@
       <span id="file-type-status">Ready</span>
       <span id="cursor-status">-</span>
     </footer>
-  </div>
-
-  <!-- AI AGENT MODAL -->
-  <div class="modal-overlay" id="ai-modal" style="display: none;">
-    <div class="modal-box" style="height: 75vh;">
-      <div class="modal-title">BitScope Agent</div>
-      <div class="ai-chat-area" id="ai-chat">
-        <div class="ai-msg">Agent: Ready. What are we vibe-coding today?</div>
-      </div>
-      <input type="text" id="ai-input" class="modal-input" placeholder="Ask AI to write code..." onkeypress="handleAIChat(event)" />
-      <div style="display: flex; gap: 8px;">
-        <button class="modal-btn" style="flex:1;" onclick="document.getElementById('setup-modal').style.display='flex'">Change Engine</button>
-        <button class="modal-btn" style="flex:1; background: var(--bg-dark);" onclick="document.getElementById('ai-modal').style.display='none'">Close</button>
-      </div>
-    </div>
   </div>
 
   <input type="file" id="fileInput" onchange="handleFileOpen(event)" />
@@ -302,33 +215,6 @@
 
     let files = {};
     let activeFileName = null;
-    let selectedEngine = null;
-
-    function selectModelTier(tierName, desc) {
-      selectedEngine = tierName;
-      document.getElementById('active-ai-label').innerText = tierName;
-      document.getElementById('setup-modal').style.display = 'none';
-      alert(`Loaded GGUF Model Profile: ${tierName}\n(${desc})`);
-    }
-
-    function autoConfigureModel() {
-      selectedEngine = "Medium Tier (3B Q4_K_M - Auto)";
-      document.getElementById('active-ai-label').innerText = selectedEngine;
-      document.getElementById('setup-modal').style.display = 'none';
-      alert("✨ Auto-configured successfully! Using optimized Q4_K_M balance for mobile execution.");
-    }
-
-    function saveApiKey() {
-      const key = document.getElementById('api-key-input').value.trim();
-      if(key.length > 5) {
-        selectedEngine = "Cloud API Key Active";
-        document.getElementById('active-ai-label').innerText = selectedEngine;
-        document.getElementById('setup-modal').style.display = 'none';
-        alert("API Key registered successfully!");
-      } else {
-        alert("Please enter a valid API key.");
-      }
-    }
 
     function renderSidebar() {
       fileListEl.innerHTML = "";
@@ -365,7 +251,7 @@
     }
 
     function createNewFile() {
-      const fileName = prompt("Enter file name (e.g., main.rs, app.swift, script.py, index.html):");
+      const fileName = prompt("Enter file name (e.g., app.apk, main.cpp, script.kt):");
       if (!fileName || fileName.trim() === "") return;
       if (!files[fileName]) files[fileName] = ""; 
       switchFile(fileName);
@@ -393,20 +279,16 @@
       codeEditor.value = files[fileName] || '';
       
       const ext = fileName.split('.').pop().toLowerCase();
-      // Massive Language Support Map for Vibe Coders
       const langMap = {
-        'cpp': 'C++', 'cc': 'C++', 'cxx': 'C++', 'c': 'C', 'h': 'C/C++ Header',
-        'rs': 'Rust', 'kt': 'Kotlin', 'swift': 'Swift', 'py': 'Python',
-        'js': 'JavaScript', 'ts': 'TypeScript', 'html': 'HTML', 'css': 'CSS',
-        'go': 'Go', 'java': 'Java', 'rb': 'Ruby', 'php': 'PHP', 'lua': 'Lua',
-        'cs': 'C#', 'scala': 'Scala', 'hs': 'Haskell', 'zig': 'Zig', 'nim': 'Nim',
-        'dart': 'Dart', 'ex': 'Elixir', 'asm': 'Assembly', 'sh': 'Shell Script'
+        'cpp': 'C++', 'c': 'C', 'h': 'C/C++ Header', 'kt': 'Kotlin', 
+        'py': 'Python', 'js': 'JavaScript', 'html': 'HTML', 'css': 'CSS',
+        'rs': 'Rust', 'java': 'Java'
       };
 
-      if (['exe', 'apk', 'bin', 'so', 'dll'].includes(ext)) {
+      if (['exe', 'apk', 'bin'].includes(ext)) {
         fileTypeStatus.innerText = `Binary (${ext.toUpperCase()}) Hex Mode`;
       } else {
-        fileTypeStatus.innerText = (langMap[ext] || ext.toUpperCase() + ' Custom') + ' Mode';
+        fileTypeStatus.innerText = (langMap[ext] || 'Text') + ' Mode';
       }
 
       updateEditor();
@@ -436,7 +318,7 @@
       const reader = new FileReader();
       const ext = file.name.split('.').pop().toLowerCase();
 
-      if (['exe', 'bin', 'apk', 'so'].includes(ext)) {
+      if (['exe', 'bin', 'apk'].includes(ext)) {
         reader.readAsArrayBuffer(file);
         reader.onload = function(e) {
           const buffer = new Uint8Array(e.target.result);
@@ -471,74 +353,11 @@
           output.innerHTML = '';
         } else {
           output.innerHTML += `<div><span style="color:#9ece6a;">~/project $</span> ${val}</div>`;
-          output.innerHTML += `<div style="color:#565f89;">vibe-shell: executed command '${val.split(' ')[0]}' locally.</div>`;
+          output.innerHTML += `<div style="color:#565f89;">bash: ${val.split(' ')[0]}: command not found</div>`;
         }
         input.value = '';
         output.scrollTop = output.scrollHeight;
       }
-    }
-
-    function openAI() {
-      if(!selectedEngine) {
-        document.getElementById('setup-modal').style.display = 'flex';
-        return;
-      }
-      document.getElementById('ai-modal').style.display = 'flex';
-    }
-
-    function handleAIChat(e) {
-      if (e.key === 'Enter') {
-        const input = document.getElementById('ai-input');
-        const chat = document.getElementById('ai-chat');
-        const prompt = input.value.trim();
-        
-        if (prompt === '') return;
-        
-        chat.innerHTML += `<div class="ai-msg user">${prompt}</div>`;
-        input.value = '';
-        chat.scrollTop = chat.scrollHeight;
-
-        setTimeout(() => {
-          let responseText = "";
-          let codeSnippet = "";
-          const lower = prompt.toLowerCase();
-
-          if (lower.includes('rust') || lower.includes('rs')) {
-            codeSnippet = `fn main() {\n    println!("Hello from BitScope Rust Engine!");\n}`;
-            responseText = "Generated Rust boilerplate:";
-          } else if (lower.includes('swift')) {
-            codeSnippet = `import SwiftUI\n\nstruct ContentView: View {\n    var body: some View {\n        Text("Hello BitScope Swift")\n    }\n}`;
-            responseText = "Generated Swift view:";
-          } else if (lower.includes('python') || lower.includes('py')) {
-            codeSnippet = `def vibe_check():\n    print("BitScope AI is fully operational!")\n\nif __name__ == "__main__":\n    vibe_check()`;
-            responseText = "Generated Python script:";
-          } else {
-            codeSnippet = `// Vibe Code Snippet for: ${prompt}\n// Engine: ${selectedEngine || 'Default'}\nconsole.log("Ready to execute");`;
-            responseText = "Here is your requested template:";
-          }
-
-          const safeCode = codeSnippet.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-          chat.innerHTML += `
-            <div class="ai-msg">
-              <div>${responseText}</div>
-              <pre style="background: var(--bg-terminal); padding: 8px; border-radius: 4px; margin-top: 6px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.8rem; color: var(--green-btn);">${safeCode}</pre>
-              <button class="modal-btn" style="margin-top: 8px;" onclick="injectCode(\`${encodeURIComponent(codeSnippet)}\`)">Insert into Editor</button>
-            </div>
-          `;
-          chat.scrollTop = chat.scrollHeight;
-        }, 300);
-      }
-    }
-
-    function injectCode(encodedCode) {
-      if (!activeFileName) {
-        alert("Please open or create a file first!");
-        return;
-      }
-      codeEditor.value = decodeURIComponent(encodedCode);
-      updateEditor();
-      document.getElementById('ai-modal').style.display = 'none';
     }
   </script>
 </body>
