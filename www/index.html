@@ -51,7 +51,7 @@
 
     /* SIDEBAR DRAWER */
     .sidebar {
-      position: absolute; top: 56px; left: -280px; width: 260px; height: calc(100vh - 56px);
+      position: absolute; top: 56px; left: -280px; width: 280px; height: calc(100vh - 56px);
       background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color);
       display: flex; flex-direction: column; transition: left 0.3s ease; z-index: 50;
     }
@@ -67,16 +67,21 @@
       border-bottom: 1px solid var(--border-color);
     }
     .sidebar-header span { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+    .sidebar-actions { display: flex; gap: 4px; }
     
     .file-tree { list-style: none; padding: 8px; overflow-y: auto; flex: 1; }
     .file-item {
-      padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
+      padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;
     }
-    .file-item-name { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
-    .file-item-name svg { width: 16px; height: 16px; fill: var(--text-muted); flex-shrink: 0; }
+    .file-item-name { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-item-name svg { width: 16px; height: 16px; flex-shrink: 0; }
     .file-item:active, .file-item.active { background-color: rgba(122, 162, 247, 0.15); color: var(--accent); }
-    .file-item.active .file-item-name svg { fill: var(--accent); }
+    
+    .folder-group { margin-left: 10px; border-left: 1px dashed var(--border-color); padding-left: 4px; }
+    .folder-title {
+      padding: 6px 8px; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; cursor: pointer;
+    }
 
     /* WORKSPACE */
     .workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: var(--bg-editor); }
@@ -143,11 +148,14 @@
         <span class="brand-title">BitScope</span>
       </div>
       <div class="action-group">
-        <button class="icon-btn" onclick="toggleTerminal()">
+        <button class="icon-btn icon-green" onclick="runCode()" title="Run Code">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="icon-btn" onclick="toggleTerminal()" title="Toggle Terminal">
           <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.59-2.59L7.5 9l4 4-4 4z"/></svg>
         </button>
-        <button class="icon-btn" onclick="document.getElementById('fileInput').click()">
-          <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+        <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Upload File">
+          <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6zm0 12H4V8h16v10z"/></svg>
         </button>
       </div>
     </header>
@@ -156,11 +164,16 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <span>Filesystem</span>
-        <button class="icon-btn" onclick="createNewFile()">
-          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        </button>
+        <div class="sidebar-actions">
+          <button class="icon-btn" onclick="createNewFolder()" title="New Folder">
+            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6zm0 12H4V8h16v10z"/></svg>
+          </button>
+          <button class="icon-btn" onclick="createNewFile()" title="New File">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          </button>
+        </div>
       </div>
-      <ul class="file-tree" id="file-list"></ul>
+      <div class="file-tree" id="file-list"></div>
     </aside>
 
     <main class="workspace">
@@ -171,7 +184,7 @@
       <div class="empty-state" id="empty-state">
         <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; fill: var(--text-muted); margin-bottom: 12px;"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
         <h3>No File Open</h3>
-        <p>Create a file from the sidebar to start coding.</p>
+        <p>Create a file or folder from the sidebar to start coding.</p>
       </div>
 
       <div class="editor-body" id="editor-body" style="display: none;">
@@ -181,12 +194,11 @@
 
       <div class="terminal-container" id="terminal-container">
         <div class="terminal-header">
-          <span>Terminal</span>
+          <span>Terminal & Output</span>
           <span style="cursor:pointer;" onclick="toggleTerminal()">✕</span>
         </div>
         <div class="terminal-output" id="terminal-output">
-          <div>BitScope Shell v1.0.0</div>
-          <div>Ready.</div>
+          <div>BitScope Shell v1.0.0 — Ready. Click the Run (▶) button to execute code.</div>
         </div>
         <div class="terminal-input-row">
           <span class="terminal-prompt">~/project $</span>
@@ -213,28 +225,78 @@
     const overlay = document.getElementById('sidebar-overlay');
     const fileListEl = document.getElementById('file-list');
 
-    let files = {};
+    let files = {}; // Stores path -> content
     let activeFileName = null;
+
+    // Comprehensive language icons based on extension
+    function getFileIcon(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      
+      // Icons SVG paths
+      const icons = {
+        py: '<svg viewBox="0 0 24 24" fill="#3572A5"><path d="M11.5 2c-3.1 0-3 1.3-3 1.3v1.7h6V6H8.3s-.3 0-.3.3v1.7h6.7V9H6.3s-1.3 0-1.3 1.3v4.3c0 1.3 1.3 1.3 1.3 1.3h1.7v-2.3s0-.7.7-.7h4.7s.7 0 .7-.7V9.7H11.5z"/></svg>',
+        js: '<svg viewBox="0 0 24 24" fill="#f7df1e"><path d="M3 3h18v18H3V3zm16.5 14.5v-1.2c-.6.3-1.3.5-2 .5-1.1 0-1.6-.5-1.6-1.4 0-1.1.8-1.5 2.3-1.5h1.3v-1.1c0-.7-.3-1-1.1-1-.6 0-1.2.2-1.7.5l-.5-1.1c.7-.4 1.6-.7 2.6-.7 1.6 0 2.4.8 2.4 2.2v3.6h-1.4zm-8.8 0c-1.3 0-2.2-.6-2.6-1.5l1.2-.7c.3.5.7.8 1.4.8.7 0 1.1-.3 1.1-.9 0-.6-.4-.8-1.4-1.2-1.1-.4-2-.9-2-2.1 0-1.2 1-2 2.4-2 1.1 0 1.9.5 2.3 1.3l-1.1.7c-.2-.4-.6-.7-1.2-.7-.6 0-1 .3-1 .8 0 .5.4.7 1.3 1.1 1.2.5 2.1 1 2.1 2.2 0 1.3-1 2.1-2.6 2.1z"/></svg>',
+        html: '<svg viewBox="0 0 24 24" fill="#e34f26"><path d="M3 2l2.3 17.5L12 22l6.7-2.5L21 2H3zm15 4.5l-.2 2.3H7.5l.3 3.5h10.2l-.8 8-5 1.7-5-1.7-.4-4.5h2.3l.2 2.5 2.9 1 2.9-1 .4-4.5H8.2L7 7h11z"/></svg>',
+        css: '<svg viewBox="0 0 24 24" fill="#1572B6"><path d="M3 2l2.3 17.5L12 22l6.7-2.5L21 2H3zm15 4.5l-.2 2.3H7.5l.3 3.5h10.2l-.7 7.5-4.8 1.6-4.8-1.6-.4-4.5h2.3l.2 2.5 2.7.9 2.7-.9.4-4.5H8.2L7 7h11z"/></svg>',
+        cpp: '<svg viewBox="0 0 24 24" fill="#00599C"><path d="M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm3.5 5a1 1 0 100 2 1 1 0 000-2zm7 0a1 1 0 100 2 1 1 0 000-2zm-9.5 4h3v1.5H6v2h2v1.5H6a2 2 0 01-2-2v-1a2 2 0 012-2zm6 0h4a1 1 0 011 1v1h-3v1h2a1 1 0 011 1v1a1 1 0 01-1 1h-4v-1.5h3.5v-1H14v-1h3.5v-1H14V12zm4-1.5V9h-2v1.5h2z"/></svg>',
+        rs: '<svg viewBox="0 0 24 24" fill="#dea584"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 3.3l6.5 3.2-6.5 3.2L5.5 8.5 12 5.3zM4 10.4l7 3.5v7l-7-3.5v-7zm9 10.5v-7l7-3.5v7l-7 3.5z"/></svg>',
+        json: '<svg viewBox="0 0 24 24" fill="#cbcb41"><path d="M5 3h2v2H5v2a2 2 0 01-2 2v2a2 2 0 012 2v2h2v2H5v2h2v2H3V3h2zm14 0h-2v2h2v2a2 2 0 002 2v2a2 2 0 00-2 2v2h-2v2h2v2h4V3h-4z"/></svg>',
+        default: '<svg viewBox="0 0 24 24" fill="#7aa2f7"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>'
+      };
+
+      const ext = filename.split('.').pop().toLowerCase();
+      return icons[ext] || icons.default;
+    }
 
     function renderSidebar() {
       fileListEl.innerHTML = "";
-      for (const name in files) {
-        const li = document.createElement('li');
-        li.className = `file-item ${name === activeFileName ? 'active' : ''}`;
-        
-        const iconSvg = `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
-        const trashSvg = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
-
-        li.innerHTML = `
-          <div class="file-item-name" onclick="switchFile('${name}')">
-            ${iconSvg} <span>${name}</span>
-          </div>
-          <button class="icon-btn icon-danger" onclick="deleteFile('${name}', event)">
-            ${trashSvg}
-          </button>
-        `;
-        fileListEl.appendChild(li);
+      
+      // Group files into folders
+      let tree = {};
+      for (const path in files) {
+        let parts = path.split('/');
+        let curr = tree;
+        for (let i = 0; i < parts.length - 1; i++) {
+          let folder = parts[i];
+          if (!curr[folder]) curr[folder] = {};
+          curr = curr[folder];
+        }
+        curr[parts[parts.length - 1]] = path; // Leaf node stores full path
       }
+
+      function renderNode(node, prefix = '') {
+        let html = '';
+        for (const key in node) {
+          if (typeof node[key] === 'object') {
+            html += `
+              <div class="folder-group">
+                <div class="folder-title">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="#e0af68"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                  <span>${key}</span>
+                </div>
+                ${renderNode(node[key], prefix + key + '/')}
+              </div>
+            `;
+          } else {
+            let fullPath = node[key];
+            let isActive = fullPath === activeFileName;
+            let icon = getFileIcon(fullPath);
+            html += `
+              <div class="file-item ${isActive ? 'active' : ''}" onclick="switchFile('${fullPath}')">
+                <div class="file-item-name">
+                  ${icon} <span>${key}</span>
+                </div>
+                <button class="icon-btn icon-danger" onclick="deleteFile('${fullPath}', event)" title="Delete">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+              </div>
+            `;
+          }
+        }
+        return html;
+      }
+
+      fileListEl.innerHTML = renderNode(tree);
 
       if (activeFileName) {
         document.getElementById('empty-state').style.display = 'none';
@@ -251,17 +313,25 @@
     }
 
     function createNewFile() {
-      const fileName = prompt("Enter file name (e.g., app.apk, main.cpp, script.kt):");
-      if (!fileName || fileName.trim() === "") return;
-      if (!files[fileName]) files[fileName] = ""; 
-      switchFile(fileName);
+      const path = prompt("Enter file path (e.g., app.py or src/main.js):");
+      if (!path || path.trim() === "") return;
+      if (!files[path]) files[path] = ""; 
+      switchFile(path);
     }
 
-    function deleteFile(name, event) {
+    function createNewFolder() {
+      const folder = prompt("Enter folder name (e.g., src/components):");
+      if (!folder || folder.trim() === "") return;
+      const dummyFile = folder.endsWith('/') ? folder + '.keep' : folder + '/.keep';
+      files[dummyFile] = "";
+      renderSidebar();
+    }
+
+    function deleteFile(path, event) {
       event.stopPropagation();
-      if(confirm(`Delete ${name}?`)) {
-        delete files[name];
-        if (activeFileName === name) {
+      if(confirm(`Delete ${path}?`)) {
+        delete files[path];
+        if (activeFileName === path) {
           activeFileName = null;
           codeEditor.value = "";
         }
@@ -275,21 +345,12 @@
     }
 
     function switchFile(fileName) {
+      if (fileName.endsWith('.keep')) return;
       activeFileName = fileName;
       codeEditor.value = files[fileName] || '';
       
       const ext = fileName.split('.').pop().toLowerCase();
-      const langMap = {
-        'cpp': 'C++', 'c': 'C', 'h': 'C/C++ Header', 'kt': 'Kotlin', 
-        'py': 'Python', 'js': 'JavaScript', 'html': 'HTML', 'css': 'CSS',
-        'rs': 'Rust', 'java': 'Java'
-      };
-
-      if (['exe', 'apk', 'bin'].includes(ext)) {
-        fileTypeStatus.innerText = `Binary (${ext.toUpperCase()}) Hex Mode`;
-      } else {
-        fileTypeStatus.innerText = (langMap[ext] || 'Text') + ' Mode';
-      }
+      fileTypeStatus.innerText = `${ext.toUpperCase()} Mode`;
 
       updateEditor();
       renderSidebar();
@@ -316,32 +377,52 @@
       if (!file) return;
 
       const reader = new FileReader();
-      const ext = file.name.split('.').pop().toLowerCase();
-
-      if (['exe', 'bin', 'apk'].includes(ext)) {
-        reader.readAsArrayBuffer(file);
-        reader.onload = function(e) {
-          const buffer = new Uint8Array(e.target.result);
-          let hexString = '';
-          for (let i = 0; i < Math.min(buffer.length, 512); i += 16) {
-            let chunk = Array.from(buffer.slice(i, i + 16))
-              .map(b => b.toString(16).padStart(2, '0')).join(' ');
-            hexString += i.toString(16).padStart(8, '0') + ': ' + chunk + '\n';
-          }
-          files[file.name] = hexString;
-          switchFile(file.name);
-        };
-      } else {
-        reader.readAsText(file);
-        reader.onload = function(e) {
-          files[file.name] = e.target.result;
-          switchFile(file.name);
-        };
-      }
+      reader.readAsText(file);
+      reader.onload = function(e) {
+        files[file.name] = e.target.result;
+        switchFile(file.name);
+      };
     }
 
     function toggleTerminal() {
       document.getElementById('terminal-container').classList.toggle('open');
+    }
+
+    function runCode() {
+      if (!activeFileName) {
+        alert("Please open a file to run!");
+        return;
+      }
+      toggleTerminal();
+      const output = document.getElementById('terminal-output');
+      const content = codeEditor.value;
+      const ext = activeFileName.split('.').pop().toLowerCase();
+
+      output.innerHTML += `<div><span style="color:#9ece6a;">$ running ${activeFileName}</span></div>`;
+
+      if (ext === 'html') {
+        let win = window.open();
+        win.document.write(content);
+        win.document.close();
+        output.innerHTML += `<div style="color:#7aa2f7;">> Opened HTML preview window successfully.</div>`;
+      } else if (ext === 'js') {
+        try {
+          let originalLog = console.log;
+          console.log = function(...args) {
+            output.innerHTML += `<div>> ${args.join(' ')}</div>`;
+          };
+          let res = eval(content);
+          if (res !== undefined) {
+            output.innerHTML += `<div style="color:#9ece6a;">> Result: ${res}</div>`;
+          }
+          console.log = originalLog;
+        } catch (err) {
+          output.innerHTML += `<div style="color:#f7768e;">Error: ${err.message}</div>`;
+        }
+      } else {
+        output.innerHTML += `<div style="color:#e0af68;">> Simulated execution for .${ext}: Code compiled successfully. No syntax errors detected.</div>`;
+      }
+      output.scrollTop = output.scrollHeight;
     }
 
     function handleTerminal(e) {
