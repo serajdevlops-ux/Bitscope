@@ -2,93 +2,495 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BitScope - Universal Binary & Entropy Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>BitScope Code Editor</title>
   <style>
-    :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
-    body { margin: 0; font-family: monospace; background: var(--bg); color: var(--text); padding: 15px; }
-    h2 { color: var(--accent); margin-top: 0; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .card { background: var(--panel); border-radius: 8px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    input[type="file"], textarea { width: 100%; box-sizing: border-box; background: #020617; border: 1px solid #334155; color: #a5f3fc; padding: 10px; font-family: monospace; border-radius: 4px; }
-    textarea { height: 120px; resize: vertical; }
-    button { background: var(--accent); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 8px; }
-    .meter-container { background: #020617; height: 24px; border-radius: 12px; overflow: hidden; margin-top: 10px; border: 1px solid #334155; }
-    .meter-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #4ade80, #facc15, #f87171); transition: width 0.3s; }
-    pre { background: #020617; padding: 10px; overflow-x: auto; max-height: 200px; border-radius: 4px; border: 1px solid #334155; }
+    /* ==========================================================
+       ACODE DARK MATERIAL THEME STYLES
+       ========================================================== */
+    :root {
+      --bg-dark: #121319;
+      --bg-editor: #181920;
+      --bg-sidebar: #0d0e12;
+      --bg-surface: #21232d;
+      --accent: #7aa2f7;
+      --accent-hover: #bb9af7;
+      --green-btn: #9ece6a;
+      --text-main: #a9b1d6;
+      --text-muted: #565f89;
+      --border-color: #292e42;
+      --font-mono: 'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* TOP NAVBAR (Acode Style) */
+    .top-bar {
+      height: 52px;
+      background-color: var(--bg-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border-color);
+      z-index: 10;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    .btn-primary {
+      background: rgba(122, 162, 247, 0.15);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-run {
+      background: rgba(158, 206, 106, 0.15);
+      color: var(--green-btn);
+      border-color: var(--green-btn);
+    }
+
+    /* WORKSPACE & SIDEBAR */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-header {
+      padding: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .file-tree {
+      list-style: none;
+      padding: 8px;
+    }
+
+    .file-item {
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+
+    .file-item:hover, .file-item.active {
+      background-color: var(--bg-surface);
+      color: #fff;
+    }
+
+    /* EDITOR CONTAINER */
+    .editor-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-editor);
+      overflow: hidden;
+    }
+
+    /* TABS BAR */
+    .tab-bar {
+      height: 38px;
+      background-color: var(--bg-dark);
+      display: flex;
+      align-items: flex-end;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      background: var(--bg-sidebar);
+      color: var(--text-muted);
+      border-right: 1px solid var(--border-color);
+      border-top: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab.active {
+      background: var(--bg-editor);
+      color: #fff;
+      border-top-color: var(--accent);
+    }
+
+    /* CODE AREA (Horizontal Scroll Enabled) */
+    .editor-body {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .line-numbers {
+      width: 48px;
+      padding: 12px 0;
+      background-color: var(--bg-editor);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      text-align: right;
+      padding-right: 10px;
+      user-select: none;
+      border-right: 1px solid rgba(255,255,255,0.05);
+      overflow: hidden;
+    }
+
+    /* CRITICAL: Enforce smooth horizontal & vertical scrolling */
+    .code-area {
+      flex: 1;
+      height: 100%;
+      width: 100%;
+      background: transparent;
+      color: var(--text-main);
+      border: none;
+      outline: none;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      resize: none;
+      tab-size: 2;
+      white-space: pre;            /* Preserves spaces and disables auto-wrap */
+      word-wrap: normal;           /* Disables word wrapping */
+      overflow-x: auto;            /* Allows horizontal scrolling */
+      overflow-y: auto;            /* Allows vertical scrolling */
+      user-select: text;
+    }
+
+    /* Custom Scrollbars */
+    .code-area::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .code-area::-webkit-scrollbar-thumb {
+      background: var(--bg-surface);
+      border-radius: 4px;
+    }
+    .code-area::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    /* FOOTER STATUS BAR */
+    .status-bar {
+      height: 26px;
+      background-color: var(--bg-dark);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* LIVE PREVIEW MODAL (Test App) */
+    .preview-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+    }
+
+    .preview-header {
+      height: 40px;
+      background: #1e1e1e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    .preview-frame {
+      flex: 1;
+      border: none;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+    }
+
+    /* Hidden File Input */
+    #fileInput {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <h2>BitScope // Shannon Entropy Analyzer</h2>
-  
-  <div class="grid">
-    <!-- FILE ANALYZER PANEL -->
-    <div class="card">
-      <h3>1. Select Binary or Document</h3>
-      <input type="file" id="fileInput" />
-      <div class="meter-container">
-        <div id="entropyBar" class="meter-bar"></div>
+
+  <div class="app-container">
+    <!-- TOP TOOLBAR -->
+    <header class="top-bar">
+      <div class="brand-section">
+        <span class="brand-title">BitScope</span>
       </div>
-      <p>Entropy: <strong id="entropyValue">0.0000</strong> / 8.0000</p>
-      <p id="analysisTag">Load a file to inspect structural density.</p>
+      <div class="action-group">
+        <button class="btn" onclick="document.getElementById('fileInput').click()">
+          📂 Open
+        </button>
+        <button class="btn btn-primary" onclick="saveFile()">
+          💾 Save
+        </button>
+        <button class="btn btn-run" onclick="runTestApp()">
+          ▶ Test App
+        </button>
+      </div>
+    </header>
+
+    <!-- WORKSPACE AREA -->
+    <div class="workspace">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-header">Project Explorer</div>
+        <ul class="file-tree">
+          <li class="file-item active" onclick="switchFile('index.html')">📄 index.html</li>
+          <li class="file-item" onclick="switchFile('style.css')">🎨 style.css</li>
+          <li class="file-item" onclick="switchFile('main.rs')">🦀 main.rs</li>
+          <li class="file-item" onclick="switchFile('app.exe')">⚙️️ app.exe (Hex View)</li>
+        </ul>
+      </aside>
+
+      <!-- EDITOR CANVAS -->
+      <main class="editor-wrapper">
+        <div class="tab-bar">
+          <div class="tab active" id="current-tab">index.html</div>
+        </div>
+
+        <div class="editor-body">
+          <div class="line-numbers" id="line-numbers">1</div>
+          <textarea 
+            class="code-area" 
+            id="code-editor" 
+            spellcheck="false" 
+            placeholder="Write or paste your code here..."
+            oninput="updateEditor()"
+            onscroll="syncScroll()"
+          ></textarea>
+        </div>
+      </main>
     </div>
 
-    <!-- LIVE IN-APP SCRIPT EXECUTION -->
-    <div class="card">
-      <h3>2. In-App Code Modification (JS / Engine Hooks)</h3>
-      <textarea id="codeEditor" placeholder="// Modify or write JS logic to process data hooks&#10;function processData(bytes) {&#10;  return 'File length in bytes: ' + bytes.length;&#10;}"></textarea>
-      <button onclick="runCustomCode()">Run Custom Logic</button>
-      <pre id="outputConsole">Console output ready...</pre>
-    </div>
+    <!-- STATUS BAR -->
+    <footer class="status-bar">
+      <span id="file-type-status">HTML Mode</span>
+      <span id="cursor-status">Lines: 1 | UTF-8</span>
+    </footer>
   </div>
 
+  <!-- TEST APP PREVIEW MODAL -->
+  <div class="preview-modal" id="preview-modal">
+    <div class="preview-header">
+      <span>Live App Preview</span>
+      <button class="btn" onclick="closePreview()">✕ Close Preview</button>
+    </div>
+    <iframe class="preview-frame" id="preview-frame"></iframe>
+  </div>
+
+  <input type="file" id="fileInput" onchange="handleFileOpen(event)" />
+
   <script>
-    let currentBytes = new Uint8Array(0);
+    /* ==========================================================
+       ACODE EDITOR LOGIC & FILE STORAGE
+       ========================================================== */
+    const codeEditor = document.getElementById('code-editor');
+    const lineNumbers = document.getElementById('line-numbers');
+    const currentTab = document.getElementById('current-tab');
+    const fileTypeStatus = document.getElementById('file-type-status');
+    const cursorStatus = document.getElementById('cursor-status');
 
-    document.getElementById('fileInput').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    // Virtual File System Mock Memory
+    const files = {
+      'index.html': '<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { background: #121212; color: #00ffcc; font-family: sans-serif; text-align: center; padding-top: 50px; }\n  </style>\n</head>\n<body>\n  <h1>Hello from BitScope Test App!</h1>\n  <button onclick="alert(\'BitScope Editor Works!\')">Click Me</button>\n</body>\n</html>',
+      'style.css': '/* Custom Styles */\nbody {\n  margin: 0;\n  padding: 0;\n}',
+      'main.rs': '// Rust Native Backend\nfn main() {\n    println!("BitScope Engine Active");\n}',
+      'app.exe': '00000000: 4d 5a 90 00 03 00 00 00 04 00 00 00 ff ff 00 00  MZ..............\n00000010: b8 00 00 00 00 00 00 00 40 00 00 00 00 00 00 00  ........@.......\n00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................\n00000030: 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 00  ................'
+    };
 
-      const buffer = await file.arrayBuffer();
-      currentBytes = new Uint8Array(buffer);
-      
-      const entropy = calculateShannonEntropy(currentBytes);
-      document.getElementById('entropyValue').innerText = entropy.toFixed(4);
-      
-      const percentage = (entropy / 8) * 100;
-      document.getElementById('entropyBar').style.width = percentage + '%';
+    let activeFileName = 'index.html';
 
-      let tag = "Low Entropy (Plaintext or Sparse Memory)";
-      if (entropy > 6.0 && entropy < 7.5) tag = "Medium Entropy (Compiled Code / Structured Data)";
-      if (entropy >= 7.5) tag = "High Entropy (Compressed Archive, Encrypted Payload, or Random Data)";
-      document.getElementById('analysisTag').innerText = tag;
-    });
+    // Initialize default file content
+    codeEditor.value = files[activeFileName];
+    updateEditor();
 
-    function calculateShannonEntropy(bytes) {
-      if (bytes.length === 0) return 0;
-      const freq = new Uint32Array(256);
-      for (let i = 0; i < bytes.length; i++) freq[bytes[i]]++;
-      
-      let entropy = 0;
-      for (let i = 0; i < 256; i++) {
-        if (freq[i] > 0) {
-          const p = freq[i] / bytes.length;
-          entropy -= p * (Math.log2 ? Math.log2(p) : Math.log(p) / Math.LN2);
-        }
+    function updateEditor() {
+      // Generate Line Numbers
+      const lines = codeEditor.value.split('\n').length;
+      let lineNumsHtml = '';
+      for (let i = 1; i <= lines; i++) {
+        lineNumsHtml += i + '<br>';
       }
-      return entropy;
+      lineNumbers.innerHTML = lineNumsHtml;
+
+      // Update Status Bar
+      cursorStatus.innerText = `Lines: ${lines} | UTF-8`;
+
+      // Save content into current in-memory file
+      files[activeFileName] = codeEditor.value;
     }
 
-    function runCustomCode() {
-      const code = document.getElementById('codeEditor').value;
-      const consoleOut = document.getElementById('outputConsole');
-      try {
-        const customFn = new Function('bytes', code + '\nreturn typeof processData === "function" ? processData(bytes) : "No processData function defined";');
-        const result = customFn(currentBytes);
-        consoleOut.innerText = "SUCCESS: " + result;
-      } catch (err) {
-        consoleOut.innerText = "ERROR: " + err.message;
+    function syncScroll() {
+      lineNumbers.scrollTop = codeEditor.scrollTop;
+    }
+
+    function switchFile(fileName) {
+      activeFileName = fileName;
+      currentTab.innerText = fileName;
+      codeEditor.value = files[fileName] || '';
+
+      if (fileName.endsWith('.exe')) {
+        fileTypeStatus.innerText = 'Binary (Hex View) Mode';
+      } else if (fileName.endsWith('.html')) {
+        fileTypeStatus.innerText = 'HTML Mode';
+      } else if (fileName.endsWith('.rs')) {
+        fileTypeStatus.innerText = 'Rust Mode';
+      } else {
+        fileTypeStatus.innerText = 'Text Mode';
       }
+
+      updateEditor();
+    }
+
+    // OPEN FILE HANDLER
+    function handleFileOpen(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      // Check if binary file (e.g., .exe)
+      if (file.name.endsWith('.exe') || file.name.endsWith('.bin')) {
+        reader.readAsArrayBuffer(file);
+        reader.onload = function(e) {
+          const buffer = new Uint8Array(e.target.result);
+          let hexString = '';
+          for (let i = 0; i < Math.min(buffer.length, 512); i += 16) {
+            let chunk = Array.from(buffer.slice(i, i + 16))
+              .map(b => b.toString(16).padStart(2, '0')).join(' ');
+            hexString += i.toString(16).padStart(8, '0') + ': ' + chunk + '\n';
+          }
+          files[file.name] = hexString;
+          switchFile(file.name);
+        };
+      } else {
+        reader.readAsText(file);
+        reader.onload = function(e) {
+          files[file.name] = e.target.result;
+          switchFile(file.name);
+        };
+      }
+    }
+
+    // SAVE FILE HANDLER
+    function saveFile() {
+      const blob = new Blob([codeEditor.value], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = activeFileName;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    // TEST APP HANDLER
+    function runTestApp() {
+      const modal = document.getElementById('preview-modal');
+      const iframe = document.getElementById('preview-frame');
+      
+      modal.style.display = 'flex';
+      iframe.srcdoc = codeEditor.value;
+    }
+
+    function closePreview() {
+      document.getElementById('preview-modal').style.display = 'none';
     }
   </script>
 </body>
