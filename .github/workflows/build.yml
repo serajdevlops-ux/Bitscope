@@ -8,7 +8,9 @@ on:
       - 'v*'
 
 jobs:
+  # ==========================================
   # 1. DESKTOP BUILDS (Windows, Linux, macOS)
+  # ==========================================
   build-desktop:
     strategy:
       fail-fast: false
@@ -27,15 +29,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Ensure package.json exists
-        shell: bash
-        run: |
-          if [ ! -f package.json ]; then
-            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
-          fi
-
-      - name: Install dependencies
+      - name: Install Frontend Dependencies
         shell: bash
         run: npm install
 
@@ -63,7 +59,7 @@ jobs:
         shell: bash
         run: npm install -g @tauri-apps/cli@latest
 
-      - name: Fetch Required Compiler Icons
+      - name: Fetch Required Compiler Icons (Fallback)
         shell: bash
         run: |
           mkdir -p src-tauri/icons
@@ -91,7 +87,9 @@ jobs:
             src-tauri/target/release/*.AppImage
             src-tauri/target/release/*.deb
 
+  # ==========================================
   # 2. ANDROID BUILD (.apk)
+  # ==========================================
   build-android:
     runs-on: ubuntu-latest
     env:
@@ -104,17 +102,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Ensure package.json exists
-        shell: bash
-        run: |
-          if [ ! -f package.json ]; then
-            echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
-          fi
-
-      - name: Install dependencies
+      - name: Install Frontend Dependencies
         shell: bash
         run: npm install
+
+      - name: Verify Frontend Build (Debug Step)
+        shell: bash
+        # This prevents the silent Gradle error by running your build script directly first.
+        # If your web code is broken, it will fail here and tell you EXACTLY why.
+        run: npm run build --if-present
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -133,13 +131,13 @@ jobs:
           cargo install cargo-ndk
           npm install -g @tauri-apps/cli@latest
 
-      - name: Fetch Required Compiler Icons
+      - name: Fetch Required Compiler Icons (Fallback)
         shell: bash
         run: |
           mkdir -p src-tauri/icons
           BASE="https://raw.githubusercontent.com/tauri-apps/tauri/1.x/tooling/cli/templates/app/src-tauri/icons"
           curl -sL "$BASE/32x32.png" -o src-tauri/icons/32x32.png
-          curl -sL "$BASE/128x128.png" -o src-tauri/icons/128x128@2x.png
+          curl -sL "$BASE/128x128.png" -o src-tauri/icons/128x128.png
           curl -sL "$BASE/128x128@2x.png" -o src-tauri/icons/128x128@2x.png
           curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
 
@@ -147,11 +145,14 @@ jobs:
         shell: bash
         run: |
           export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+          # Accept Android licenses
           yes | sdkmanager --licenses || true
           
+          # Detect the installed NDK directory
           export NDK_HOME="$ANDROID_SDK_ROOT/ndk/$(ls -1 $ANDROID_SDK_ROOT/ndk | head -n 1)"
           echo "Using NDK_HOME: $NDK_HOME"
           
+          # Initialize and build Android project
           npx tauri android init || true
           npx tauri android build --apk
 
