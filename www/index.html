@@ -44,7 +44,7 @@
       border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
     .icon-btn:active { background: var(--bg-surface); }
-    .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+    .icon-btn svg { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
     .icon-accent { color: var(--accent); }
     .icon-green { color: var(--green-btn); }
     .icon-danger { color: var(--danger); width: 28px !important; height: 28px !important; }
@@ -74,7 +74,7 @@
       padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; cursor: pointer;
       display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;
     }
-    .file-item-name { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-item-name { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
     .file-item-name svg { width: 16px; height: 16px; flex-shrink: 0; }
     .file-item:active, .file-item.active { background-color: rgba(122, 162, 247, 0.15); color: var(--accent); }
     
@@ -225,14 +225,10 @@
     const overlay = document.getElementById('sidebar-overlay');
     const fileListEl = document.getElementById('file-list');
 
-    let files = {}; // Stores path -> content
+    let files = {};
     let activeFileName = null;
 
-    // Comprehensive language icons based on extension
     function getFileIcon(filename) {
-      const ext = filename.split('.').pop().toLowerCase();
-      
-      // Icons SVG paths
       const icons = {
         py: '<svg viewBox="0 0 24 24" fill="#3572A5"><path d="M11.5 2c-3.1 0-3 1.3-3 1.3v1.7h6V6H8.3s-.3 0-.3.3v1.7h6.7V9H6.3s-1.3 0-1.3 1.3v4.3c0 1.3 1.3 1.3 1.3 1.3h1.7v-2.3s0-.7.7-.7h4.7s.7 0 .7-.7V9.7H11.5z"/></svg>',
         js: '<svg viewBox="0 0 24 24" fill="#f7df1e"><path d="M3 3h18v18H3V3zm16.5 14.5v-1.2c-.6.3-1.3.5-2 .5-1.1 0-1.6-.5-1.6-1.4 0-1.1.8-1.5 2.3-1.5h1.3v-1.1c0-.7-.3-1-1.1-1-.6 0-1.2.2-1.7.5l-.5-1.1c.7-.4 1.6-.7 2.6-.7 1.6 0 2.4.8 2.4 2.2v3.6h-1.4zm-8.8 0c-1.3 0-2.2-.6-2.6-1.5l1.2-.7c.3.5.7.8 1.4.8.7 0 1.1-.3 1.1-.9 0-.6-.4-.8-1.4-1.2-1.1-.4-2-.9-2-2.1 0-1.2 1-2 2.4-2 1.1 0 1.9.5 2.3 1.3l-1.1.7c-.2-.4-.6-.7-1.2-.7-.6 0-1 .3-1 .8 0 .5.4.7 1.3 1.1 1.2.5 2.1 1 2.1 2.2 0 1.3-1 2.1-2.6 2.1z"/></svg>',
@@ -250,8 +246,6 @@
 
     function renderSidebar() {
       fileListEl.innerHTML = "";
-      
-      // Group files into folders
       let tree = {};
       for (const path in files) {
         let parts = path.split('/');
@@ -261,10 +255,10 @@
           if (!curr[folder]) curr[folder] = {};
           curr = curr[folder];
         }
-        curr[parts[parts.length - 1]] = path; // Leaf node stores full path
+        curr[parts[parts.length - 1]] = path;
       }
 
-      function renderNode(node, prefix = '') {
+      function renderNode(node) {
         let html = '';
         for (const key in node) {
           if (typeof node[key] === 'object') {
@@ -274,7 +268,7 @@
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="#e0af68"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
                   <span>${key}</span>
                 </div>
-                ${renderNode(node[key], prefix + key + '/')}
+                ${renderNode(node[key])}
               </div>
             `;
           } else {
