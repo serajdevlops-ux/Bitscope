@@ -29,12 +29,14 @@ jobs:
           node-version: 20
 
       - name: Ensure package.json exists
+        shell: bash
         run: |
           if [ ! -f package.json ]; then
             echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
           fi
 
       - name: Install dependencies
+        shell: bash
         run: npm install
 
       - name: Install Rust stable
@@ -58,6 +60,7 @@ jobs:
             pkg-config
 
       - name: Install Tauri CLI
+        shell: bash
         run: npm install -g @tauri-apps/cli@latest
 
       - name: Fetch Required Compiler Icons
@@ -73,6 +76,7 @@ jobs:
           curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
 
       - name: Build Tauri App
+        shell: bash
         env:
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
         run: npx tauri build
@@ -102,12 +106,14 @@ jobs:
           node-version: 20
 
       - name: Ensure package.json exists
+        shell: bash
         run: |
           if [ ! -f package.json ]; then
             echo '{"name": "bitscope", "private": true, "scripts": {"build": "echo \"No build script required\""}}' > package.json
           fi
 
       - name: Install dependencies
+        shell: bash
         run: npm install
 
       - name: Setup Java JDK
@@ -122,6 +128,7 @@ jobs:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
       - name: Install cargo-ndk & Tauri CLI
+        shell: bash
         run: |
           cargo install cargo-ndk
           npm install -g @tauri-apps/cli@latest
@@ -137,6 +144,7 @@ jobs:
           curl -sL "$BASE/icon.png" -o src-tauri/icons/icon.png
 
       - name: Build Android APK
+        shell: bash
         run: |
           export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
           yes | sdkmanager --licenses || true
@@ -144,7 +152,7 @@ jobs:
           export NDK_HOME="$ANDROID_SDK_ROOT/ndk/$(ls -1 $ANDROID_SDK_ROOT/ndk | head -n 1)"
           echo "Using NDK_HOME: $NDK_HOME"
           
-          npx tauri android init --force || true
+          npx tauri android init || true
           npx tauri android build --apk
 
       - name: Upload Android APK Artifact
